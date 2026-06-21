@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remix: Cinematic 3D doodle portfolio experience</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Patrick+Hand&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:'Caveat',cursive}
+#canvas-container{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0}
+#scroll-wrapper{position:fixed;top:0;left:0;width:100vw;height:100vh;overflow-y:scroll;z-index:10;pointer-events:all}
+#scroll-content{height:700vh;pointer-events:none}
+
+/* Grid paper */
+#grid-overlay{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:2;opacity:0.14;
+  background-image:
+    linear-gradient(rgba(80,80,200,0.35) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(80,80,200,0.35) 1px,transparent 1px);
+  background-size:42px 42px;
+}
+/* Margin line */
+#margin-line{
+  position:fixed;top:0;left:72px;width:2px;height:100vh;
+  pointer-events:none;z-index:2;
+  background:rgba(220,80,80,0.25);
+}
+/* Paper vignette */
+#vignette{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:3;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(190,180,160,0.4) 100%);
+}
+/* Progress bar */
+#progress-bar{
+  position:fixed;bottom:0;left:0;height:3px;background:#222;
+  width:0%;z-index:200;transition:width 0.08s linear;
+}
+/* Scroll hint */
+#scroll-hint{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  z-index:200;color:#333;font-family:'Caveat',cursive;font-size:1.3rem;
+  text-align:center;pointer-events:none;transition:opacity 0.5s;
+}
+#scroll-hint .arr{display:block;font-size:2rem;animation:bouncey 1.3s ease-in-out infinite}
+@keyframes bouncey{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+
+/* Nav dots */
+#nav-dots{
+  position:fixed;right:22px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:14px;z-index:200;pointer-events:auto;
+}
+.ndot{
+  width:10px;height:10px;border:2px solid #444;border-radius:50%;
+  background:transparent;transition:background 0.3s,transform 0.3s;
+  cursor:pointer;
+}
+.ndot.active{background:#222;transform:scale(1.35)}
+
+/* Scene name badge */
+#scene-badge{
+  position:fixed;top:22px;left:50%;transform:translateX(-50%);
+  background:rgba(249,246,239,0.9);border:2.5px solid #222;
+  border-radius:30px;padding:5px 20px;
+  font-family:'Caveat',cursive;font-size:1.1rem;font-weight:600;color:#222;
+  z-index:200;pointer-events:none;transition:opacity 0.5s;opacity:0;
+  letter-spacing:0.5px;
+}
+
+/* HTML Overlays */
+.hscene{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;z-index:100;opacity:0;visibility:hidden;transition:opacity 0.7s ease;
+}
+
+/* Scene 1 */
+#s1-title{
+  font-family:'Caveat',cursive;font-size:clamp(3rem,9vw,7.5rem);
+  font-weight:700;color:#111;text-align:center;line-height:1.05;
+  text-shadow:4px 4px 0 rgba(0,0,0,0.07);letter-spacing:-2px;
+}
+#s1-pills{
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;margin-top:20px;
+}
+.pill{
+  border:2.5px solid #222;border-radius:40px;
+  padding:6px 26px;font-family:'Caveat',cursive;
+  font-size:clamp(1rem,2.5vw,1.45rem);color:#222;letter-spacing:0.3px;
+  background:rgba(249,246,239,0.7);backdrop-filter:blur(2px);
+}
+#s1-handle{
+  margin-top:16px;font-family:'Patrick Hand',cursive;
+  font-size:1.2rem;color:#666;letter-spacing:2px;
+}
+
+/* Contact Panel */
+#contact-wrap{
+  background:rgba(249,246,239,0.97);border:3px solid #222;
+  border-radius:18px;padding:30px 38px;max-width:500px;width:90%;
+  position:relative;box-shadow:6px 6px 0 rgba(0,0,0,0.1);
+}
+#contact-wrap::before{
+  content:'';position:absolute;top:14px;left:14px;right:-8px;bottom:-8px;
+  border:2.5px dashed #ccc;border-radius:18px;z-index:-1;
+}
+#contact-wrap h2{
+  font-size:2rem;font-weight:700;color:#111;
+  margin-bottom:18px;padding-bottom:10px;
+  border-bottom:2px dashed #bbb;
+}
+.crow{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:12px;font-size:1.2rem;color:#222;
+}
+.cico{font-size:1.5rem;min-width:30px;text-align:center}
+.clbl{font-weight:600;color:#666;min-width:80px;font-size:0.95rem}
+.cval{color:#111;font-size:1.05rem;word-break:break-all}
+.cdiv{border-top:1.5px dashed #ccc;margin:14px 0}
+
+/* Final */
+#final-wrap{text-align:center;padding:0 20px}
+#final-text{
+  font-family:'Caveat',cursive;font-size:clamp(2.2rem,7vw,5.5rem);
+  font-weight:700;color:#111;line-height:1.15;
+  text-shadow:3px 3px 0 rgba(0,0,0,0.06);
+}
+#final-sub{
+  margin-top:18px;font-family:'Patrick Hand',cursive;
+  font-size:1.15rem;color:#666;letter-spacing:1px;
+}
+
+/* Scene section hints (mid-journey) */
+.mid-hint{
+  position:fixed;pointer-events:none;z-index:100;
+  font-family:'Caveat',cursive;color:#222;
+  background:rgba(249,246,239,0.88);
+  border:2px solid #333;border-radius:12px;
+  padding:8px 18px;font-size:1.3rem;font-weight:600;
+  transition:opacity 0.6s;opacity:0;
+}
+
+/* Paper-style Resume Cards */
+.paper-card {
+  background: rgba(249, 246, 239, 0.97);
+  border: 2.5px solid #222;
+  border-radius: 12px;
+  padding: 22px 26px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  font-family: 'Caveat', cursive;
+  margin: 10px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.paper-card::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+.paper-card a, .paper-card .pill {
+  pointer-events: auto;
+}
+.paper-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.12);
+}
+.paper-card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  z-index: -1;
+  pointer-events: none;
+}
+.paper-card h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 8px;
+  border-bottom: 2px dashed #bbb;
+  padding-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.paper-card h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.paper-card p, .paper-card li {
+  font-size: 1.15rem;
+  color: #222;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.paper-card ul {
+  padding-left: 18px;
+  margin-bottom: 8px;
+}
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.small-tag {
+  border: 1.5px solid #222;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.95rem;
+  background: rgba(249,246,239,0.85);
+  color: #222;
+  font-family: 'Patrick Hand', cursive;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div id="grid-overlay"></div>
+<div id="margin-line"></div>
+<div id="vignette"></div>
+
+<div id="canvas-container"><canvas id="mc"></canvas></div>
+
+<div id="scroll-wrapper"><div id="scroll-content"></div></div>
+
+<!-- Scene badge -->
+<div id="scene-badge">Scene 1 — The Developer</div>
+
+<!-- Nav dots -->
+<div id="nav-dots">
+  <div class="ndot active" title="The Developer"></div>
+  <div class="ndot" title="Experience"></div>
+  <div class="ndot" title="Skills City"></div>
+  <div class="ndot" title="SaaS Lab"></div>
+  <div class="ndot" title="Global Reach"></div>
+  <div class="ndot" title="Command Center"></div>
+  <div class="ndot" title="Portal"></div>
+</div>
+
+<!-- HTML Overlays -->
+<!-- Scene 1 -->
+<div class="hscene" id="hs1">
+  <div id="s1-title">MANOJ<br>VELLINGIRI</div>
+  <div id="s1-pills">
+    <div class="pill">💻 Full Stack Developer</div>
+    <div class="pill">🧠 AI/ML Engineer</div>
+    <div class="pill">🚀 SaaS Builder</div>
+  </div>
+  <div id="s1-handle" style="pointer-events: auto;"><a href="https://linkedin.com/in/manojvellingiri" target="_blank" style="color: #666; text-decoration: none;">linkedin.com/in/manojvellingiri</a></div>
+</div>
+
+<!-- Scene 2: Experience -->
+<div class="hscene" id="hs2" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card">
+    <h2>💻 Teloro Software</h2>
+    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Full Stack Developer Intern • Remote • May 2025 – May 2026</div>
+    <ul>
+      <li>Developed AI SaaS applications (<strong>Teloro GPT</strong> &amp; <strong>Auto Dock</strong>).</li>
+      <li>Designed scalable APIs and responsive UIs with FastAPI, Flask, React, and Angular.</li>
+      <li>Built document processing and workflow automation for international clients.</li>
+      <li>Contributed to cloud deployments and Dockerized microservices.</li>
+    </ul>
+    <div class="tag-container">
+      <span class="small-tag">FastAPI</span>
+      <span class="small-tag">Flask</span>
+      <span class="small-tag">React</span>
+      <span class="small-tag">Angular</span>
+      <span class="small-tag">Docker</span>
+    </div>
+  </div>
+  
+  <div class="paper-card">
+    <h2>⚙️ Keenminds Technologies</h2>
+    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Software Engineer Intern • Coimbatore • Dec 2024 – Jun 2025</div>
+    <ul>
+      <li>Built <strong>DocDiff</strong>, a semantic document comparison engine using GoLang and Pinecone.</li>
+      <li>Built <strong>InvoParse</strong>, an AI-powered invoice extraction platform using OCR and Llama 3.</li>
+      <li>Developed and maintained web applications using .NET Core and Angular.</li>
+      <li>Optimized REST APIs and SQL Server databases.</li>
+    </ul>
+    <div class="tag-container">
+      <span class="small-tag">GoLang</span>
+      <span class="small-tag">Pinecone</span>
+      <span class="small-tag">Llama 3</span>
+      <span class="small-tag">.NET Core</span>
+      <span class="small-tag">Angular</span>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 3: Skills City -->
+<div class="hscene" id="hs3" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🛠️ Core Engineering</h2>
+    <h3>Frontend Technologies</h3>
+    <div class="tag-container" style="margin-bottom: 10px;">
+      <span class="small-tag">React</span>
+      <span class="small-tag">Next.js</span>
+      <span class="small-tag">Angular</span>
+      <span class="small-tag">Tailwind CSS</span>
+      <span class="small-tag">TypeScript</span>
+      <span class="small-tag">HTML / CSS</span>
+    </div>
+    <h3>Backend & APIs</h3>
+    <div class="tag-container">
+      <span class="small-tag">FastAPI</span>
+      <span class="small-tag">Flask</span>
+      <span class="small-tag">GoLang</span>
+      <span class="small-tag">NestJS</span>
+      <span class="small-tag">.NET Core</span>
+      <span class="small-tag">REST APIs</span>
+    </div>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🧠 AI, Databases & Cloud</h2>
+    <h3>AI/ML & Semantic Search</h3>
+    <div class="tag-container" style="margin-bottom: 10px;">
+      <span class="small-tag">Llama 3</span>
+      <span class="small-tag">OpenAI API</span>
+      <span class="small-tag">Explainable AI (XAI)</span>
+      <span class="small-tag">Pinecone (Vector DB)</span>
+      <span class="small-tag">Semantic Search</span>
+      <span class="small-tag">OCR / Text Mining</span>
+    </div>
+    <h3>DevOps & Data</h3>
+    <div class="tag-container">
+      <span class="small-tag">Docker</span>
+      <span class="small-tag">AWS</span>
+      <span class="small-tag">Git / GitHub</span>
+      <span class="small-tag">SQL Server</span>
+      <span class="small-tag">SQLite</span>
+      <span class="small-tag">MongoDB</span>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 4: Projects (SaaS Lab) -->
+<div class="hscene" id="hs4" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🚀 Enterprise SaaS Projects</h2>
+    <h3>InvoParse — AI Invoice SaaS</h3>
+    <p>AI invoice processing pipeline using Llama 3 and OCR. Achieved 99.8% extraction accuracy and cut manual administrative work by 95%.</p>
+    
+    <h3>DocDiff — Semantic Diff Engine</h3>
+    <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>💡 Real-World Platforms</h2>
+    <h3>AutoDock — Smart Warehouse SaaS</h3>
+    <p>Warehouse automation system with NestJS and WebSocket. Integrated IoT, RFID, and AI-based tracking, slashing turnaround by 72%.</p>
+    
+    <h3>Govt Welfare eligibility Engine</h3>
+    <p>Final-year project recommending welfare schemes based on live user data. Boosted accuracy by 35% using XAI for transparency.</p>
+  </div>
+</div>
+
+<!-- Scene 5: Education & Achievements -->
+<div class="hscene" id="hs5" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🎓 Education</h2>
+    <h3>Bachelor of Computer Applications (BCA)</h3>
+    <p><strong>Dr. GRD College of Arts and Science</strong>, Coimbatore</p>
+    <p style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Class of 2023 – 2026</p>
+    <ul>
+      <li>Major in Software Development, Minor in Web Technologies.</li>
+      <li>Academic Aggregate: 68.12% (consistently above 60% through 10th, 12th &amp; UG).</li>
+    </ul>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🏆 Achievements & Leadership</h2>
+    <ul>
+      <li><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
+      <li><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
+      <li><strong>Research</strong>: Presented AI &amp; Remote Sensing research at national technical events at IIT Bombay and Anna University.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Scene 6: Contact -->
+<div class="hscene" id="hs6">
+  <div id="contact-wrap" style="pointer-events: auto;">
+    <h2>📡 Command Center</h2>
+    <div class="crow"><span class="cico">👤</span><span class="clbl">Name</span><span class="cval">Manoj Vellingiri</span></div>
+    <div class="crow"><span class="cico">💼</span><span class="clbl">Role</span><span class="cval">Full Stack Developer | AI/ML Engineer</span></div>
+    <div class="crow"><span class="cico">🎓</span><span class="clbl">Education</span><span class="cval">BCA — Dr. GRD College (2026)</span></div>
+    <div class="crow"><span class="cico">📍</span><span class="clbl">Location</span><span class="cval">Coimbatore, Tamil Nadu - 641004</span></div>
+    <div class="cdiv"></div>
+    <div class="crow"><span class="cico">🔗</span><span class="clbl">LinkedIn</span><span class="cval"><a href="https://linkedin.com/in/manojvellingiri" target="_blank" style="color: #222; text-decoration: underline; font-weight: bold; pointer-events: auto;">linkedin.com/in/manojvellingiri</a></span></div>
+    <div class="crow"><span class="cico">✉️</span><span class="clbl">Email</span><span class="cval"><a href="mailto:manojvellingiri0066@gmail.com" style="color: #222; text-decoration: underline; pointer-events: auto;">manojvellingiri0066@gmail.com</a></span></div>
+    <div class="crow"><span class="cico">📞</span><span class="clbl">Phone</span><span class="cval"><a href="tel:+919363166713" style="color: #222; text-decoration: underline; pointer-events: auto;">+91 9363166713</a></span></div>
+    <div class="cdiv"></div>
+    <div style="text-align: center; margin-top: 10px;">
+      <a href="mailto:manojvellingiri0066@gmail.com?subject=Inquiry%20from%20Portfolio" class="pill" style="display: inline-block; text-decoration: none; cursor: pointer; pointer-events: auto; transition: background 0.2s;" onmouseover="this.style.background='#eee'" onmouseout="this.style.background='rgba(249,246,239,0.7)'">📩 Get In Touch</a>
+    </div>
+  </div>
+</div>
+
+<!-- Final -->
+<div class="hscene" id="hsfinal">
+  <div id="final-wrap">
+    <div id="final-text">LET'S BUILD<br>SOMETHING EXTRAORDINARY.</div>
+    <div id="final-sub">— Manoj Vellingiri · SaaS &amp; AI Builder —</div>
+  </div>
+</div>
+
+<div id="progress-bar"></div>
+<div id="scroll-hint">Scroll to explore<span class="arr">↓</span></div>
+<script type="module">
+import * as THREE from 'three';
+
+// ── Setup ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('mc');
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0xf9f6ef,1);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf9f6ef);
+scene.fog = new THREE.FogExp2(0xf9f6ef,0.016);
+
+const camera = new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,600);
+camera.position.set(0,2,20);
+
+scene.add(new THREE.AmbientLight(0xffffff,1.4));
+const dl = new THREE.DirectionalLight(0xfff8f0,0.7);
+dl.position.set(6,12,8); scene.add(dl);
+
+// ── Scroll ─────────────────────────────────────────────────────────────────
+const sw = document.getElementById('scroll-wrapper');
+let SP = 0, smoothSP = 0;
+sw.addEventListener('scroll',()=>{
+  SP = sw.scrollTop/(sw.scrollHeight-sw.clientHeight);
+  document.getElementById('progress-bar').style.width=(SP*100)+'%';
+  updateNav(SP);
+  document.getElementById('scroll-hint').style.opacity = SP<0.03?'1':'0';
+});
+
+// Click to scroll using nav dots
+const SCROLL_TARGETS = [0, 0.19, 0.33, 0.47, 0.61, 0.78, 1.0];
+document.querySelectorAll('.ndot').forEach((dot, index) => {
+  dot.addEventListener('click', () => {
+    const targetProgress = SCROLL_TARGETS[index];
+    const targetScrollTop = targetProgress * (sw.scrollHeight - sw.clientHeight);
+    sw.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+  });
+});
+
+const SCENES_POS = [0,0.13,0.27,0.41,0.55,0.69,0.88];
+const SCENE_NAMES = ['Scene 1 — The Developer','Scene 2 — Experience Hub','Scene 3 — Skills City','Scene 4 — SaaS Lab','Scene 5 — Global Reach','Scene 6 — Command Center','Final'];
+function updateNav(p){
+  const dots=document.querySelectorAll('.ndot');
+  let si=0;
+  SCENES_POS.forEach((s,i)=>{ if(p>=s) si=i; });
+  dots.forEach((d,i)=>d.classList.toggle('active',i===si));
+  const badge=document.getElementById('scene-badge');
+  badge.textContent=SCENE_NAMES[si];
+  badge.style.opacity=(p>0.02&&p<0.98)?'1':'0';
+}
+
+// ── Canvas helpers ─────────────────────────────────────────────────────────
+function mkTex(drawFn,w=512,h=512){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d'); drawFn(ctx,w,h);
+  return new THREE.CanvasTexture(c);
+}
+
+function plane(tex,w,h,dw=false){
+  const m=new THREE.Mesh(
+    new THREE.PlaneGeometry(w,h),
+    new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:dw})
+  );
+  return m;
+}
+
+// Jittery line for sketch feel
+function jLine(pts,col=0x111111,op=1){
+  const verts=[];
+  pts.forEach(([x,y,z])=>{
+    verts.push(x+(Math.random()-.5)*.03,y+(Math.random()-.5)*.03,z||0);
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  return new THREE.Line(g,new THREE.LineBasicMaterial({color:col,opacity:op,transparent:op<1}));
+}
+
+// ── Doodle draw functions ──────────────────────────────────────────────────
+function dPassport(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=10; ctx.lineCap='round'; ctx.lineJoin='round';
+  function jRect(x,y,w,h){
+    ctx.beginPath();
+    ctx.moveTo(x+(Math.random()-.5)*2,y); ctx.lineTo(x+w+(Math.random()-.5)*2,y+(Math.random()-.5)*2);
+    ctx.lineTo(x+w+(Math.random()-.5)*2,y+h+(Math.random()-.5)*2); ctx.lineTo(x+(Math.random()-.5)*2,y+h+(Math.random()-.5)*2);
+    ctx.closePath(); ctx.stroke();
+  }
+  jRect(70,40,156,216); jRect(84,54,128,188);
+  ctx.font='bold 80px Caveat'; ctx.fillStyle='#1a1a1a'; ctx.textAlign='center';
+  ctx.fillText('P',152,130);
+  ctx.font='30px Caveat'; ctx.fillText('PASSPORT',152,175);
+  for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(88+i*24,230,4,0,Math.PI*2);ctx.fill();}
+  ctx.font='24px Patrick Hand'; ctx.fillStyle='#555'; ctx.fillText('IND',152,210);
+}
+
+function dAirplane(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(40,160); ctx.bezierCurveTo(180,160,300,130,340,110);
+  ctx.bezierCurveTo(380,90,360,60,320,70); ctx.bezierCurveTo(300,75,260,100,220,160);
+  ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(120,160); ctx.lineTo(80,240); ctx.lineTo(240,240); ctx.lineTo(240,160); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,160); ctx.lineTo(40,200); ctx.lineTo(100,190); ctx.lineTo(100,160); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(52,160); ctx.lineTo(30,100); ctx.lineTo(90,160); ctx.stroke();
+  for(let i=0;i<5;i++){
+    ctx.beginPath(); ctx.arc(150+i*30,140,8,0,Math.PI*2);
+    ctx.strokeStyle='rgba(26,26,26,0.5)'; ctx.lineWidth=4; ctx.stroke();
+  }
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9;
+}
+
+function dBriefcase(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.lineCap='round';
+  ctx.beginPath(); ctx.roundRect(50,100,216,176,8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(50,170); ctx.lineTo(266,170); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(115,100); ctx.lineTo(115,65); ctx.lineTo(201,65); ctx.lineTo(201,100); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(128,150,60,40,4); ctx.stroke();
+  ctx.beginPath(); ctx.arc(158,150,14,Math.PI,0); ctx.stroke();
+  for(let y=190;y<270;y+=15){
+    ctx.beginPath(); ctx.setLineDash([6,8]); ctx.moveTo(64,y); ctx.lineTo(252,y);
+    ctx.strokeStyle='rgba(26,26,26,0.2)'; ctx.lineWidth=2; ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function dNotebook(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.lineCap='round';
+  ctx.beginPath(); ctx.roundRect(55,30,200,260,4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(90,30); ctx.lineTo(90,290); ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.stroke();
+  for(let y=60;y<280;y+=44){
+    ctx.beginPath(); ctx.arc(75,y,10,0,Math.PI*2);
+    ctx.fillStyle='rgba(26,26,26,0.15)'; ctx.fill();
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=5; ctx.stroke();
+  }
+  for(let y=90;y<275;y+=30){
+    ctx.beginPath(); ctx.moveTo(108,y); ctx.lineTo(240,y);
+    ctx.strokeStyle='rgba(26,26,26,0.35)'; ctx.lineWidth=3; ctx.stroke();
+  }
+  ctx.font='bold 36px Caveat'; ctx.fillStyle='#1a1a1a'; ctx.textAlign='left';
+  ctx.fillText('Ideas...',110,115);
+  ctx.fillText('Goals...', 110,175);
+}
+
+function dHouse(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.rect(42,130,228,190); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(22,130); ctx.lineTo(156,22); ctx.lineTo(290,130); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(22,130); ctx.lineTo(8,130); ctx.lineTo(156,8); ctx.lineTo(304,130); ctx.lineTo(290,130); ctx.stroke();
+  ctx.beginPath(); ctx.rect(200,38,36,68); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(196,42); ctx.lineTo(200,42);
+  ctx.moveTo(240,42); ctx.lineTo(244,42); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(120,230,76,90,4); ctx.stroke();
+  ctx.beginPath(); ctx.arc(190,275,5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.rect(56,150,68,56); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(90,150); ctx.lineTo(90,206);
+  ctx.moveTo(56,178); ctx.lineTo(124,178); ctx.stroke();
+  ctx.beginPath(); ctx.rect(192,150,68,56); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(226,150); ctx.lineTo(226,206);
+  ctx.moveTo(192,178); ctx.lineTo(260,178); ctx.stroke();
+}
+
+function dBuilding(label,floors){
+  return (ctx)=>{
+    const bw=130,bh=Math.min(floors*32,280),bx=91,by=310-bh;
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=7; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.rect(bx,by,bw,bh); ctx.stroke();
+    for(let f=1;f<floors;f++){
+      ctx.beginPath(); ctx.moveTo(bx,by+f*32); ctx.lineTo(bx+bw,by+f*32);
+      ctx.strokeStyle='rgba(26,26,26,0.25)'; ctx.lineWidth=2; ctx.stroke();
+    }
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=5;
+    const wf=Math.min(floors,8);
+    for(let f=0;f<wf-1;f++){
+      for(let c=0;c<3;c++){
+        ctx.beginPath(); ctx.rect(bx+10+c*40,by+6+f*32,28,18);
+        ctx.strokeStyle='rgba(26,26,26,0.5)'; ctx.stroke();
+        if(Math.random()>0.5){ ctx.fillStyle='rgba(255,220,100,0.3)'; ctx.fill(); }
+      }
+    }
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=7;
+    ctx.beginPath(); ctx.roundRect(bx+45,310-36,40,36,3); ctx.stroke();
+    ctx.font='bold 32px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center';
+    const words=label.split(' ');
+    words.forEach((w,i)=>ctx.fillText(w,156,by-12-i*28*(words.length-1)));
+  };
+}
+
+function dCode(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=10; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.roundRect(40,40,232,160,8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(136,200); ctx.lineTo(110,250); ctx.lineTo(202,250); ctx.lineTo(176,200); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(110,105); ctx.lineTo(90,120); ctx.lineTo(110,135);
+  ctx.moveTo(146,135); ctx.lineTo(166,120); ctx.lineTo(146,105);
+  ctx.moveTo(138,95); ctx.lineTo(118,145);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(70,75); ctx.lineTo(130,75);
+  ctx.moveTo(70,165); ctx.lineTo(240,165);
+  ctx.strokeStyle='rgba(26,26,26,0.3)'; ctx.lineWidth=4; ctx.stroke();
+}
+
+function dGear(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=9; ctx.lineCap='round'; ctx.lineJoin='round';
+  const cx=156, cy=156, r1=60, r2=90;
+  ctx.beginPath();
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    ctx.lineTo(cx+Math.cos(a-0.25)*r1, cy+Math.sin(a-0.25)*r1);
+    ctx.lineTo(cx+Math.cos(a-0.2)*r2, cy+Math.sin(a-0.2)*r2);
+    ctx.lineTo(cx+Math.cos(a+0.2)*r2, cy+Math.sin(a+0.2)*r2);
+    ctx.lineTo(cx+Math.cos(a+0.25)*r1, cy+Math.sin(a+0.25)*r1);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,25,0,Math.PI*2); ctx.stroke();
+}
+
+function dAI(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=6; ctx.lineCap='round';
+  const nodes=[[156,70],[80,150],[232,150],[100,250],[212,250],[156,180]];
+  const links=[[0,1],[0,2],[0,5],[1,5],[2,5],[1,3],[2,4],[3,5],[4,5],[3,4]];
+  links.forEach(([a,b])=>{
+    ctx.beginPath(); ctx.moveTo(nodes[a][0],nodes[a][1]); ctx.lineTo(nodes[b][0],nodes[b][1]);
+    ctx.strokeStyle='rgba(26,26,26,0.35)'; ctx.stroke();
+  });
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8;
+  nodes.forEach(([x,y])=>{
+    ctx.beginPath(); ctx.arc(x,y,14,0,Math.PI*2);
+    ctx.fillStyle='#f9f6ef'; ctx.fill(); ctx.stroke();
+  });
+  ctx.beginPath(); ctx.arc(156,180,6,0,Math.PI*2); ctx.fillStyle='#c00'; ctx.fill();
+}
+
+function dFlask(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(120,40); ctx.lineTo(120,130); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(196,40); ctx.lineTo(196,130); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(120,130);
+  ctx.bezierCurveTo(80,160,50,200,50,260);
+  ctx.bezierCurveTo(50,320,266,320,266,260);
+  ctx.bezierCurveTo(266,200,236,160,196,130);
+  ctx.stroke();
+  ctx.beginPath(); ctx.rect(108,26,100,22); ctx.stroke();
+  ctx.fillStyle='rgba(100,180,255,0.25)';
+  ctx.beginPath(); ctx.moveTo(55,240); ctx.bezierCurveTo(55,270,110,290,158,290);
+  ctx.bezierCurveTo(206,290,261,270,261,240); ctx.fill();
+  for(let i=0;i<5;i++){
+    ctx.beginPath(); ctx.arc(90+i*30,250-i*15,7+i*2,0,Math.PI*2);
+    ctx.strokeStyle='rgba(50,120,255,0.4)'; ctx.lineWidth=3; ctx.stroke();
+  }
+  ctx.font='bold 28px Caveat'; ctx.fillStyle='rgba(26,26,26,0.6)'; ctx.textAlign='center';
+  ctx.fillText('InvoParse',158,200);
+}
+
+function dRocket(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(156,300);
+  ctx.bezierCurveTo(100,300,80,220,80,150);
+  ctx.bezierCurveTo(80,60,156,20,156,20);
+  ctx.bezierCurveTo(156,20,232,60,232,150);
+  ctx.bezierCurveTo(232,220,212,300,156,300);
+  ctx.stroke();
+  ctx.beginPath(); ctx.arc(156,130,30,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='rgba(100,200,255,0.2)'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(80,280); ctx.lineTo(46,360); ctx.lineTo(80,340); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(232,280); ctx.lineTo(266,360); ctx.lineTo(232,340); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(115,340); ctx.bezierCurveTo(115,400,156,420,156,400);
+  ctx.bezierCurveTo(156,420,197,400,197,340);
+  ctx.strokeStyle='rgba(255,140,0,0.7)'; ctx.lineWidth=6; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(130,350); ctx.bezierCurveTo(130,390,156,405,156,390);
+  ctx.bezierCurveTo(156,405,182,390,182,350);
+  ctx.strokeStyle='rgba(255,60,0,0.5)'; ctx.lineWidth=5; ctx.stroke();
+  ctx.font='bold 26px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center';
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8;
+  ctx.fillText('AutoDock',156,200);
+}
+
+function dBulb(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.arc(156,140,100,0,Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(56,140); ctx.bezierCurveTo(56,200,86,230,120,240);
+  ctx.lineTo(192,240); ctx.bezierCurveTo(226,230,256,200,256,140); ctx.stroke();
+  ctx.beginPath(); ctx.rect(110,240,92,22); ctx.stroke();
+  ctx.beginPath(); ctx.rect(115,262,82,18); ctx.stroke();
+  ctx.beginPath(); ctx.rect(120,280,72,14); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(130,220); ctx.lineTo(140,180); ctx.lineTo(150,210);
+  ctx.lineTo(162,165); ctx.lineTo(172,195); ctx.lineTo(182,160); ctx.lineTo(185,220);
+  ctx.strokeStyle='rgba(26,26,26,0.6)'; ctx.lineWidth=5; ctx.stroke();
+  const rays=[[156,30,156,10],[200,60,218,46],[230,100,252,90],[218,155,240,155],
+               [112,60,94,46],[82,100,60,90],[94,155,72,155]];
+  rays.forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle='rgba(255,200,0,0.6)'; ctx.lineWidth=4; ctx.stroke();
+  });
+}
+
+function dChart(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=7; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(50,320); ctx.lineTo(50,40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(50,320); ctx.lineTo(450,320); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(50,40); ctx.lineTo(42,60); ctx.moveTo(50,40); ctx.lineTo(58,60); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(450,320); ctx.lineTo(430,312); ctx.moveTo(450,320); ctx.lineTo(430,328); ctx.stroke();
+  const bars=[60,100,150,220,290];
+  const cols=['rgba(26,26,26,0.1)','rgba(26,26,26,0.15)','rgba(26,26,26,0.2)','rgba(26,26,26,0.25)','rgba(26,26,26,0.3)'];
+  bars.forEach((h,i)=>{
+    ctx.fillStyle=cols[i]; ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=5;
+    ctx.fillRect(70+i*74,320-h,52,h); ctx.strokeRect(70+i*74,320-h,52,h);
+  });
+  ctx.beginPath();
+  ctx.moveTo(96,258); ctx.lineTo(170,218); ctx.lineTo(244,168); ctx.lineTo(318,98); ctx.lineTo(392,28);
+  ctx.strokeStyle='rgba(50,150,255,0.6)'; ctx.lineWidth=5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(392,28); ctx.lineTo(378,40); ctx.moveTo(392,28); ctx.lineTo(404,40);
+  ctx.stroke();
+  ctx.font='26px Caveat'; ctx.fillStyle='#333'; ctx.textAlign='center';
+  ['Q1','Q2','Q3','Q4','Q5'].forEach((l,i)=>ctx.fillText(l,96+i*74,350));
+  ctx.font='bold 32px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='left';
+  ctx.fillText('GROWTH ↗',180,80);
+}
+
+function dGlobe(ctx){
+  const cx=256,cy=256,r=200;
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  for(let a=-80;a<=80;a+=20){
+    const rad=a*Math.PI/180;
+    const rx=Math.abs(Math.cos(rad)*r);
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx,r,0,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(26,26,26,${0.08+Math.abs(a)/400})`; ctx.lineWidth=2; ctx.stroke();
+  }
+  for(let la=-80;la<=80;la+=20){
+    const ly=cy+la/90*r;
+    const lw=Math.sqrt(r*r-(la/90*r)*(la/90*r));
+    ctx.beginPath(); ctx.moveTo(cx-lw,ly); ctx.lineTo(cx+lw,ly);
+    ctx.strokeStyle='rgba(26,26,26,0.12)'; ctx.lineWidth=2; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy);
+  ctx.strokeStyle='rgba(26,26,26,0.25)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r);
+  ctx.strokeStyle='rgba(26,26,26,0.25)'; ctx.lineWidth=3; ctx.stroke();
+  const blobs=[{x:cx-60,y:cy-30,rx:60,ry:40},{x:cx+60,y:cy-20,rx:45,ry:55},
+               {x:cx-30,y:cy+50,rx:50,ry:30},{x:cx+90,y:cy+40,rx:30,ry:25},
+               {x:cx-110,y:cy+30,rx:25,ry:35}];
+  blobs.forEach(b=>{
+    ctx.beginPath(); ctx.ellipse(b.x,b.y,b.rx,b.ry,Math.random()*0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(26,26,26,0.1)'; ctx.fill();
+    ctx.strokeStyle='rgba(26,26,26,0.3)'; ctx.lineWidth=2; ctx.stroke();
+  });
+  ctx.beginPath(); ctx.arc(cx+40,cy+10,8,0,Math.PI*2);
+  ctx.fillStyle='#c00'; ctx.fill();
+  ctx.font='bold 22px Caveat'; ctx.fillStyle='#c00'; ctx.textAlign='left';
+  ctx.fillText('India',cx+50,cy+8);
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8; ctx.stroke();
+}
+
+function dPortal(ctx){
+  const cx=256,cy=256;
+  for(let r=200;r>10;r-=22){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(26,26,26,${0.05+r/400})`; ctx.lineWidth=r>150?6:4; ctx.stroke();
+  }
+  for(let a=0;a<360;a+=20){
+    const rad=a*Math.PI/180;
+    const r1=60,r2=90+Math.random()*60;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(rad)*r1,cy+Math.sin(rad)*r1);
+    ctx.lineTo(cx+Math.cos(rad)*r2,cy+Math.sin(rad)*r2);
+    ctx.strokeStyle=`rgba(26,26,26,${0.2+Math.random()*0.3})`; ctx.lineWidth=2; ctx.stroke();
+  }
+  ctx.font='90px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(26,26,26,0.15)'; ctx.fillText('✦',cx,cy);
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=8;
+  ctx.beginPath(); ctx.arc(cx,cy,200,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,50,0,Math.PI*2); ctx.stroke();
+}
+
+function dWorldMap(ctx){
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=3;
+  ctx.strokeRect(20,20,472,472);
+  for(let i=1;i<4;i++){
+    ctx.beginPath(); ctx.moveTo(20+i*118,20); ctx.lineTo(20+i*118,492);
+    ctx.strokeStyle='rgba(26,26,26,0.15)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20,20+i*118); ctx.lineTo(492,20+i*118);
+    ctx.stroke();
+  }
+  ctx.setLineDash([8,10]);
+  const routes=[[80,280,420,180],[80,280,380,320],[80,280,200,100],[80,280,440,300]];
+  routes.forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.bezierCurveTo(x1+(x2-x1)*0.3,y1-60,x1+(x2-x1)*0.7,y2-60,x2,y2);
+    ctx.strokeStyle='rgba(26,26,26,0.4)'; ctx.lineWidth=3; ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  const cities=[{x:80,y:280,l:'India'},{x:420,y:180,l:'UK'},{x:380,y:320,l:'Singapore'},{x:200,y:100,l:'Europe'},{x:440,y:300,l:'USA'}];
+  cities.forEach(({x,y,l})=>{
+    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.fillStyle='#c00'; ctx.fill();
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.stroke();
+    ctx.font='bold 24px Caveat'; ctx.fillStyle='#222'; ctx.textAlign='left';
+    ctx.fillText(l,x+10,y-4);
+  });
+  ctx.font='24px serif'; ctx.textAlign='center'; ctx.fillText('★',80,280);
+}
+
+// ── Scene Groups ───────────────────────────────────────────────────────────
+const G = new THREE.Group(); scene.add(G);
+
+// Shared ground
+const groundMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(100,700),
+  new THREE.MeshBasicMaterial({color:0xe8e4d8,transparent:true,opacity:0.55})
+);
+groundMesh.name='ground';
+groundMesh.rotation.x=-Math.PI/2;
+groundMesh.position.set(0,-1.2,-200);
+G.add(groundMesh);
+
+// ─ SCENE 1: THE DREAMER ────────────────────────────────────────────
+const S1=new THREE.Group(); S1.name='S1'; S1.position.z=0;
+
+function makeRoad(){
+  const g=new THREE.Group(); g.name='road-group';
+  const rg=new THREE.PlaneGeometry(5,200);
+  const rm=new THREE.Mesh(rg,new THREE.MeshBasicMaterial({color:0xd8d4c8,transparent:true,opacity:0.6}));
+  rm.name='road-surface'; rm.rotation.x=-Math.PI/2; rm.position.set(0,-1.1,-80); g.add(rm);
+  for(let z=0;z>-200;z-=8){
+    const l1=jLine([[-2.5,-1.1,z],[-2.5,-1.1,z-8]],0x444444,0.6); l1.name='road-edge-l'+z; g.add(l1);
+    const l2=jLine([[2.5,-1.1,z],[2.5,-1.1,z-8]],0x444444,0.6); l2.name='road-edge-r'+z; g.add(l2);
+    if(z%24===0){
+      const c=jLine([[0,-1.1,z],[0,-1.1,z-12]],0xaaaaaa,0.4); c.name='road-center'+z; g.add(c);
+    }
+  }
+  return g;
+}
+S1.add(makeRoad());
+
+const passportMesh=plane(mkTex(dPassport),1.8,1.8); passportMesh.name='passport'; passportMesh.position.set(-4.5,2,0); S1.add(passportMesh);
+const planeMesh=plane(mkTex(dAirplane,600,320),3,1.6); planeMesh.name='plane-float'; planeMesh.position.set(4,3.8,-3); S1.add(planeMesh);
+const bcMesh=plane(mkTex(dBriefcase),1.8,1.8); bcMesh.name='briefcase'; bcMesh.position.set(5.5,1.5,2); S1.add(bcMesh);
+const nbMesh=plane(mkTex(dNotebook),1.7,1.8); nbMesh.name='notebook'; nbMesh.position.set(-6,1.5,-2); S1.add(nbMesh);
+
+function makeTree(x,z){
+  const tex=mkTex((ctx)=>{
+    ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=7; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(256,510); ctx.lineTo(256,320); ctx.stroke();
+    for(let i=0;i<8;i++){
+      const ang=(Math.random()-.5)*2.2,len=60+Math.random()*80,fy=320-i*20;
+      ctx.beginPath(); ctx.moveTo(256,fy);
+      ctx.lineTo(256+Math.cos(ang)*len,fy+Math.sin(ang)*len);
+      ctx.strokeStyle=`rgba(42,42,42,${0.4+Math.random()*0.5})`; ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(256,230,90,0,Math.PI*2);
+    ctx.fillStyle='rgba(42,42,42,0.07)'; ctx.fill();
+    ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=6; ctx.stroke();
+  },512,512);
+  const m=plane(tex,2,3,false); m.name='tree'+x+z;
+  m.position.set(x,-1.2+1.5,z); return m;
+}
+for(let z=2;z>-60;z-=7){
+  S1.add(makeTree(-4+Math.random()*0.6,z));
+  S1.add(makeTree(3.5+Math.random()*0.6,z));
+}
+G.add(S1);
+
+// ─ SCENE 2: EXPERIENCE HUB ──────────────────────────────────────
+const S2=new THREE.Group(); S2.name='S2'; S2.position.z=-42;
+
+const houseTex=mkTex(dHouse);
+const houseM=plane(houseTex,7,7); houseM.name='house-main'; houseM.position.set(0,2.2,0); S2.add(houseM);
+
+const houseLblTex=mkTex((ctx)=>{
+  ctx.font='bold 96px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('EXPERIENCE HUB',256,256);
+},512,128);
+const houseLbl=plane(houseLblTex,7,1.4); houseLbl.name='house-lbl'; houseLbl.position.set(0,6.3,0.1); S2.add(houseLbl);
+
+const roomData=[
+  {label:'💻 Teloro Software',icon:mkTex(dCode),x:-5.2},
+  {label:'⚙️ Keenminds Tech',icon:mkTex(dGear),x:0},
+  {label:'🧠 AI & Semantic Systems',icon:mkTex(dAI),x:5.2},
+];
+roomData.forEach((rd,i)=>{
+  const border=jLine([[-1.9,-1.4,0],[1.9,-1.4,0],[1.9,1.9,0],[-1.9,1.9,0],[-1.9,-1.4,0]],0x222222,0.9);
+  border.name='room-border'+i; border.position.set(rd.x,-1.5,0.05); S2.add(border);
+  const ic=plane(rd.icon,3.2,3.2); ic.name='room-icon'+i; ic.position.set(rd.x,-0.6,0.1); S2.add(ic);
+  const lt=mkTex((ctx)=>{ctx.font='bold 50px Caveat';ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(rd.label,256,256);},512,128);
+  const lm=plane(lt,4,0.85); lm.name='room-lbl'+i; lm.position.set(rd.x,-2.5,0.1); S2.add(lm);
+});
+G.add(S2);
+
+// ─ SCENE 3: SKILLS CITY ───────────────────────────────────────────
+const S3=new THREE.Group(); S3.name='S3'; S3.position.z=-84;
+
+const cityLblTex=mkTex((ctx)=>{
+  ctx.font='bold 96px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('✦  SKILLS CITY  ✦',256,256);
+},512,128);
+const cityLbl=plane(cityLblTex,9,1.5); cityLbl.name='city-lbl'; cityLbl.position.set(0,6,0); S3.add(cityLbl);
+
+const skills=[
+  {l:'Frontend Tower',fl:7,x:-9},
+  {l:'Backend Tower',fl:8,x:-4.5},
+  {l:'AI / ML Tower',fl:9,x:0},
+  {l:'DevOps & Cloud',fl:6,x:4.5},
+  {l:'Databases',fl:5,x:9}
+];
+skills.forEach((sk,i)=>{
+  const tex=mkTex(dBuilding(sk.l,sk.fl));
+  const m=plane(tex,3.6,4.4); m.name='skill'+i; m.position.set(sk.x,0.4,0); S3.add(m);
+  const lt=mkTex((ctx)=>{
+    ctx.font='bold 52px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(sk.l,256,256);
+  },512,128);
+  const lm=plane(lt,3.8,0.8); lm.name='sklbl'+i; lm.position.set(sk.x,3.2,0.1); S3.add(lm);
+});
+
+const streetL=jLine([[-14,-1.1,1],[-14,-1.1,-2],[14,-1.1,-2],[14,-1.1,1]],0x333333,0.6); streetL.name='street'; S3.add(streetL);
+const walkL=jLine([[-14,-1.08,0],[14,-1.08,0]],0x888888,0.4); walkL.name='walk'; S3.add(walkL);
+G.add(S3);
+
+// ─ SCENE 4: STARTUP LAB ───────────────────────────────────────────
+const S4=new THREE.Group(); S4.name='S4'; S4.position.z=-126;
+
+const labLblTex=mkTex((ctx)=>{
+  ctx.font='bold 96px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚗  SAAS  LAB',256,256);
+},512,128);
+const labLbl=plane(labLblTex,8,1.4); labLbl.name='lab-lbl'; labLbl.position.set(0,6,0); S4.add(labLbl);
+
+const rocketM=plane(mkTex(dRocket,312,512),2.2,4.2); rocketM.name='rocket'; rocketM.position.set(-4,1,0); S4.add(rocketM);
+const bulbM=plane(mkTex(dBulb),2.8,2.8); bulbM.name='bulb'; bulbM.position.set(3.5,1.5,0); S4.add(bulbM);
+const chartM=plane(mkTex(dChart,512,400),3.5,2.8); chartM.name='chart'; chartM.position.set(0,-0.5,0); S4.add(chartM);
+
+const futureLblTex=mkTex((ctx)=>{
+  ctx.font='bold 80px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🔮 BUILDING AI & SAAS 🔮',256,256);
+},512,128);
+const futureLbl=plane(futureLblTex,8,1.2); futureLbl.name='future-lbl'; futureLbl.position.set(0,-2.8,0.1); S4.add(futureLbl);
+
+const ideas=['💡','🚀','📊','🌍','💼','⚡','🔑','✨','📈','🎯'];
+ideas.forEach((em,i)=>{
+  const t=mkTex((ctx)=>{ctx.font='160px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(em,256,256);});
+  const m=plane(t,0.9,0.9); m.name='idea'+i;
+  m.position.set((Math.random()-.5)*18,(Math.random()-.5)*5+1,(Math.random()-.5)*3);
+  S4.add(m);
+});
+G.add(S4);
+
+// ─ SCENE 5: GLOBAL REACH ────────────────────────────────────────
+const S5=new THREE.Group(); S5.name='S5'; S5.position.z=-168;
+
+const globeLblTex=mkTex((ctx)=>{
+  ctx.font='bold 96px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🌍  GLOBAL  REACH',256,256);
+},512,128);
+const globeLbl=plane(globeLblTex,8,1.4); globeLbl.name='globe-lbl'; globeLbl.position.set(0,6,0); S5.add(globeLbl);
+
+const globeM=plane(mkTex(dGlobe,512,512),7,7); globeM.name='globe-main'; globeM.position.set(-2.5,0.5,0); S5.add(globeM);
+
+const mapM=plane(mkTex(dWorldMap,512,512),5.5,5.5); mapM.name='map'; mapM.position.set(5.5,0.5,0.1); S5.add(mapM);
+
+const tags=['✈ Remote / Hybrid / Onsite','🌐 International Projects','🤝 Collaborative & Agile','🚀 Scalable SaaS Builder'];
+tags.forEach((t,i)=>{
+  const tx=mkTex((ctx)=>{ctx.font='bold 62px Caveat';ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,256,256);},512,128);
+  const m=plane(tx,5.5,0.85); m.name='gtag'+i; m.position.set(5.5,-2.5-i*1.05,0.1); S5.add(m);
+});
+
+for(let i=0;i<4;i++){
+  const pm=plane(mkTex(dAirplane,600,320),1.2,0.65); pm.name='mplane'+i;
+  pm.position.set(-7+i*4, 3.5+Math.sin(i)*1, 0.5); S5.add(pm);
+}
+G.add(S5);
+
+// ─ SCENE 6: COMMAND CENTER ────────────────────────────────────────
+const S6=new THREE.Group(); S6.name='S6'; S6.position.z=-210;
+
+const cmdLblTex=mkTex((ctx)=>{
+  ctx.font='bold 96px Caveat'; ctx.fillStyle='#111'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚡  COMMAND  CENTER',256,256);
+},512,128);
+const cmdLbl=plane(cmdLblTex,8,1.4); cmdLbl.name='cmd-lbl'; cmdLbl.position.set(0,6.5,0); S6.add(cmdLbl);
+
+[-4.5,0,4.5].forEach((px,i)=>{
+  const pw=3.8,ph=5.5;
+  const panelBg=new THREE.Mesh(
+    new THREE.PlaneGeometry(pw,ph),
+    new THREE.MeshBasicMaterial({color:0xf0ece0,transparent:true,opacity:0.7})
+  );
+  panelBg.name='panelbg'+i; panelBg.position.set(px,0.5,0); S6.add(panelBg);
+  const pb=jLine([[-pw/2,-ph/2,0.01],[pw/2,-ph/2,0.01],[pw/2,ph/2,0.01],[-pw/2,ph/2,0.01],[-pw/2,-ph/2,0.01]],0x222222,1);
+  pb.name='panel-border'+i; pb.position.set(px,0.5,0.05); S6.add(pb);
+  for(let row=0;row<6;row++){
+    const gy=-ph/2+row*0.85;
+    const gl=jLine([[-pw/2+0.1,gy,0],[pw/2-0.1,gy,0]],0x222222,0.12);
+    gl.name='pgrid'+i+row; gl.position.set(px,0.5,0.06); S6.add(gl);
+  }
+  const icons=[dCode,dAI,dBulb];
+  const ic=plane(mkTex(icons[i],256,256),2.2,2.2); ic.name='panel-icon'+i;
+  ic.position.set(px,1.2,0.1); S6.add(ic);
+  const corners=[[-pw/2,-ph/2],[-pw/2+0.3,-ph/2],[pw/2,-ph/2],[pw/2-0.3,-ph/2]];
+  corners.forEach(([cx,cy],ci)=>{
+    const dot=new THREE.Mesh(new THREE.CircleGeometry(0.06,8),new THREE.MeshBasicMaterial({color:0x222222}));
+    dot.name='corner'+i+ci; dot.position.set(px+cx,0.5+cy,0.1); S6.add(dot);
+  });
+});
+G.add(S6);
+
+// ─ FINAL PORTAL ───────────────────────────────────────────────────
+const SFinal=new THREE.Group(); SFinal.name='SFinal'; SFinal.position.z=-245;
+const portalM=plane(mkTex(dPortal,512,512),8,8); portalM.name='portal'; portalM.position.set(0,1,0); SFinal.add(portalM);
+G.add(SFinal);
+
+// ── Camera Path ────────────────────────────────────────────────────────────
+const KEYS=[
+  {t:0,   cz:20,  cy:2.2, cx:0,    lz:-5,   ly:1.5, lx:0},
+  {t:0.08,cz:8,   cy:1.8, cx:0,    lz:-15,  ly:1.2, lx:0},
+  {t:0.12,cz:-8,  cy:2,   cx:0.5,  lz:-30,  ly:1.2, lx:0},
+  {t:0.18,cz:-30, cy:2.2, cx:0,    lz:-42,  ly:1.5, lx:0},
+  {t:0.26,cz:-52, cy:2.2, cx:-0.5, lz:-62,  ly:1.5, lx:0},
+  {t:0.32,cz:-68, cy:2.5, cx:0,    lz:-78,  ly:1.5, lx:0},
+  {t:0.40,cz:-86, cy:2.5, cx:0.5,  lz:-96,  ly:1.5, lx:0},
+  {t:0.46,cz:-102,cy:2.5, cx:0,    lz:-112, ly:1.5, lx:0},
+  {t:0.54,cz:-118,cy:2.5, cx:-.5,  lz:-128, ly:1.5, lx:0},
+  {t:0.60,cz:-138,cy:2.5, cx:0,    lz:-148, ly:1.5, lx:0},
+  {t:0.68,cz:-158,cy:2.5, cx:0.5,  lz:-168, ly:1.5, lx:0},
+  {t:0.74,cz:-178,cy:2.5, cx:0,    lz:-188, ly:1.5, lx:0},
+  {t:0.82,cz:-196,cy:2.8, cx:0,    lz:-210, ly:2,   lx:0},
+  {t:0.90,cz:-218,cy:2.8, cx:0,    lz:-228, ly:1.8, lx:0},
+  {t:0.96,cz:-234,cy:2.2, cx:0,    lz:-245, ly:1,   lx:0},
+  {t:1,   cz:-245,cy:3,   cx:0,    lz:-250, ly:2,   lx:0},
+];
+
+function easeInOut(t){return t<.5?2*t*t:-1+(4-2*t)*t}
+
+function samplePath(p){
+  let a=KEYS[0],b=KEYS[KEYS.length-1];
+  for(let i=0;i<KEYS.length-1;i++){
+    if(p>=KEYS[i].t&&p<=KEYS[i+1].t){a=KEYS[i];b=KEYS[i+1];break;}
+  }
+  const range=b.t-a.t;
+  const f=range<0.001?0:easeInOut((p-a.t)/range);
+  return {
+    cz:a.cz+(b.cz-a.cz)*f, cy:a.cy+(b.cy-a.cy)*f, cx:a.cx+(b.cx-a.cx)*f,
+    lz:a.lz+(b.lz-a.lz)*f, ly:a.ly+(b.ly-a.ly)*f, lx:a.lx+(b.lx-a.lx)*f
+  };
+}
+
+// ── HTML Overlay Control ───────────────────────────────────────────────────
+function setOverlays(p){
+  const hs1=document.getElementById('hs1');
+  const hs2=document.getElementById('hs2');
+  const hs3=document.getElementById('hs3');
+  const hs4=document.getElementById('hs4');
+  const hs5=document.getElementById('hs5');
+  const hs6=document.getElementById('hs6');
+  const hsfinal=document.getElementById('hsfinal');
+
+  const op1 = p<0.11?Math.min(1,p/0.01):Math.max(0,(0.13-p)/0.02);
+  hs1.style.opacity = op1;
+  hs1.style.visibility = op1 > 0 ? 'visible' : 'hidden';
+
+  const s2show=p>=0.13&&p<0.26;
+  const op2 = s2show?Math.min(1,(p-0.13)/0.02,(0.26-p)/0.02):0;
+  hs2.style.opacity = op2;
+  hs2.style.visibility = op2 > 0 ? 'visible' : 'hidden';
+
+  const s3show=p>=0.27&&p<0.40;
+  const op3 = s3show?Math.min(1,(p-0.27)/0.02,(0.40-p)/0.02):0;
+  hs3.style.opacity = op3;
+  hs3.style.visibility = op3 > 0 ? 'visible' : 'hidden';
+
+  const s4show=p>=0.41&&p<0.54;
+  const op4 = s4show?Math.min(1,(p-0.41)/0.02,(0.54-p)/0.02):0;
+  hs4.style.opacity = op4;
+  hs4.style.visibility = op4 > 0 ? 'visible' : 'hidden';
+
+  const s5show=p>=0.55&&p<0.68;
+  const op5 = s5show?Math.min(1,(p-0.55)/0.02,(0.68-p)/0.02):0;
+  hs5.style.opacity = op5;
+  hs5.style.visibility = op5 > 0 ? 'visible' : 'hidden';
+
+  const s6show=p>=0.69&&p<0.89;
+  const op6 = s6show?Math.min(1,(p-0.69)/0.03,(0.89-p)/0.03):0;
+  hs6.style.opacity = op6;
+  hs6.style.visibility = op6 > 0 ? 'visible' : 'hidden';
+
+  const opf = p>0.90?Math.min(1,(p-0.90)/0.04):0;
+  hsfinal.style.opacity = opf;
+  hsfinal.style.visibility = opf > 0 ? 'visible' : 'hidden';
+}
+
+// ── Animation Loop ─────────────────────────────────────────────────────────
+let T=0, ssp=0;
+const clock=new THREE.Clock();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta();
+  T+=dt;
+
+  ssp+=(SP-ssp)*(1-Math.exp(-dt*5));
+
+  const cam=samplePath(ssp);
+  const sway=Math.sin(T*0.3)*0.25*(1-ssp);
+  camera.position.set(cam.cx+sway, cam.cy, cam.cz);
+  camera.lookAt(cam.lx+sway*0.3, cam.ly, cam.lz);
+
+  // Floating icons S1
+  [passportMesh,planeMesh,bcMesh,nbMesh].forEach((m,i)=>{
+    m.position.y+=Math.sin(T*0.7+i*1.3)*0.003;
+    m.rotation.z=Math.sin(T*0.4+i)*0.04;
+  });
+
+  // Globe spin
+  globeM.rotation.z=T*0.06;
+  // Portal spin
+  portalM.rotation.z=T*0.12;
+  // Rocket bob
+  rocketM.position.y=1+Math.sin(T*0.7)*0.18;
+  rocketM.rotation.z=Math.sin(T*0.4)*0.04;
+  // Bulb sway
+  bulbM.position.y=1.5+Math.sin(T*1.1)*0.06;
+  // Idea bubbles
+  S4.children.forEach((c,i)=>{
+    if(c.name&&c.name.startsWith('idea')){
+      c.position.y+=Math.sin(T*0.5+i*0.9)*0.004;
+      c.position.x+=Math.sin(T*0.35+i*0.7)*0.002;
+      c.rotation.z=Math.sin(T*0.2+i)*0.06;
+    }
+  });
+  // Mini planes
+  S5.children.forEach((c)=>{
+    if(c.name&&c.name.startsWith('mplane')){
+      const bi=parseInt(c.name.replace('mplane',''));
+      c.position.x=-7+bi*4+Math.cos(T*0.4+bi)*1.5;
+      c.position.y=3.5+Math.sin(T*0.4+bi)*0.6;
+    }
+  });
+  // Building pulse
+  S3.children.forEach((c,i)=>{
+    if(c.name&&c.name.startsWith('skill')){
+      c.scale.y=1+Math.sin(T*0.5+i*0.7)*0.015;
+    }
+  });
+  // Tree sway
+  S1.children.forEach((c)=>{
+    if(c.name&&c.name.startsWith('tree')){
+      c.rotation.z=Math.sin(T*0.6+c.position.z*0.1)*0.025;
+    }
+  });
+
+  setOverlays(ssp);
+  renderer.render(scene,camera);
+}
+animate();
+
+// ── Resize ─────────────────────────────────────────────────────────────────
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>

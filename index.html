@@ -158,12 +158,45 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 .paper-card::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
-.paper-card a, .paper-card .pill {
+.paper-card a, .paper-card .pill, .paper-card .card-tab {
   pointer-events: auto;
 }
 .paper-card:hover {
   transform: translate(-2px, -2px);
   box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.12);
+}
+/* Tabs Styling */
+.card-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 2px dashed #ccc;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  pointer-events: auto;
+}
+.card-tab {
+  background: transparent;
+  border: 1.5px solid #222;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  pointer-events: auto;
+}
+.card-tab.active {
+  background: #222;
+  color: #f9f6ef;
+}
+.tab-content {
+  display: block;
+}
+.tab-content.hidden {
+  display: none !important;
 }
 .paper-card::before {
   content: '';
@@ -234,7 +267,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
     max-width: 95% !important;
     box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.08) !important;
     border-width: 1.5px !important;
-    max-height: 42vh !important; /* Prevent cards from exceeding viewport half-height when stacked */
+    max-height: 65vh !important; /* Single card is much more compact */
   }
   
   .paper-card::before {
@@ -300,9 +333,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 
   /* Scene Badge */
   #scene-badge {
-    top: 10px !important;
-    font-size: 0.9rem !important;
-    padding: 3px 12px !important;
+    top: 24px !important;
+    font-size: 0.95rem !important;
+    padding: 4px 14px !important;
     border-width: 1.5px !important;
   }
 
@@ -376,7 +409,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
   }
 }
 </style>
-  <script type="module" crossorigin src="/Portfolio/assets/index-C_p7reia.js"></script>
+  <script type="module" crossorigin src="/Portfolio/assets/index-jYcc1UVh.js"></script>
 </head>
 <body>
 <div id="grid-overlay"></div>
@@ -414,132 +447,152 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 </div>
 
 <!-- Scene 2: Experience -->
-<div class="hscene" id="hs2" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+<div class="hscene" id="hs2">
   <div class="paper-card">
-    <h2>💻 Teloro Software</h2>
-    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Full Stack Developer Intern • Remote • May 2025 – May 2026</div>
-    <ul>
-      <li>Developed AI SaaS applications (<strong>Teloro GPT</strong> &amp; <strong>Auto Dock</strong>).</li>
-      <li>Designed scalable APIs and responsive UIs with FastAPI, Flask, React, and Angular.</li>
-      <li>Built document processing and workflow automation for international clients.</li>
-      <li>Contributed to cloud deployments and Dockerized microservices.</li>
-    </ul>
-    <div class="tag-container">
-      <span class="small-tag">FastAPI</span>
-      <span class="small-tag">Flask</span>
-      <span class="small-tag">React</span>
-      <span class="small-tag">Angular</span>
-      <span class="small-tag">Docker</span>
+    <div class="card-tabs">
+      <button class="card-tab active" onclick="showTab('2', 0)">💻 Teloro Software</button>
+      <button class="card-tab" onclick="showTab('2', 1)">⚙️ Keenminds Tech</button>
     </div>
-  </div>
-  
-  <div class="paper-card">
-    <h2>⚙️ Keenminds Technologies</h2>
-    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Software Engineer Intern • Coimbatore • Dec 2024 – Jun 2025</div>
-    <ul>
-      <li>Built <strong>DocDiff</strong>, a semantic document comparison engine using GoLang and Pinecone.</li>
-      <li>Built <strong>InvoParse</strong>, an AI-powered invoice extraction platform using OCR and Llama 3.</li>
-      <li>Developed and maintained web applications using .NET Core and Angular.</li>
-      <li>Optimized REST APIs and SQL Server databases.</li>
-    </ul>
-    <div class="tag-container">
-      <span class="small-tag">GoLang</span>
-      <span class="small-tag">Pinecone</span>
-      <span class="small-tag">Llama 3</span>
-      <span class="small-tag">.NET Core</span>
-      <span class="small-tag">Angular</span>
+    
+    <div class="tab-content" id="2-tab-0">
+      <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Full Stack Developer Intern • Remote • May 2025 – May 2026</div>
+      <ul>
+        <li>Developed AI SaaS applications (<strong>Teloro GPT</strong> &amp; <strong>Auto Dock</strong>).</li>
+        <li>Designed scalable APIs and responsive UIs with FastAPI, Flask, React, and Angular.</li>
+        <li>Built document processing and workflow automation for international clients.</li>
+        <li>Contributed to cloud deployments and Dockerized microservices.</li>
+      </ul>
+      <div class="tag-container">
+        <span class="small-tag">FastAPI</span>
+        <span class="small-tag">Flask</span>
+        <span class="small-tag">React</span>
+        <span class="small-tag">Angular</span>
+        <span class="small-tag">Docker</span>
+      </div>
+    </div>
+    
+    <div class="tab-content hidden" id="2-tab-1">
+      <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Software Engineer Intern • Coimbatore • Dec 2024 – Jun 2025</div>
+      <ul>
+        <li>Built <strong>DocDiff</strong>, a semantic document comparison engine using GoLang and Pinecone.</li>
+        <li>Built <strong>InvoParse</strong>, an AI-powered invoice extraction platform using OCR and Llama 3.</li>
+        <li>Developed and maintained web applications using .NET Core and Angular.</li>
+        <li>Optimized REST APIs and SQL Server databases.</li>
+      </ul>
+      <div class="tag-container">
+        <span class="small-tag">GoLang</span>
+        <span class="small-tag">Pinecone</span>
+        <span class="small-tag">Llama 3</span>
+        <span class="small-tag">.NET Core</span>
+        <span class="small-tag">Angular</span>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Scene 3: Skills City -->
-<div class="hscene" id="hs3" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>🛠️ Core Engineering</h2>
-    <h3>Frontend Technologies</h3>
-    <div class="tag-container" style="margin-bottom: 10px;">
-      <span class="small-tag">React</span>
-      <span class="small-tag">Next.js</span>
-      <span class="small-tag">Angular</span>
-      <span class="small-tag">Tailwind CSS</span>
-      <span class="small-tag">TypeScript</span>
-      <span class="small-tag">HTML / CSS</span>
+<div class="hscene" id="hs3">
+  <div class="paper-card">
+    <div class="card-tabs">
+      <button class="card-tab active" onclick="showTab('3', 0)">🛠️ Core Engineering</button>
+      <button class="card-tab" onclick="showTab('3', 1)">🧠 AI &amp; DevOps</button>
     </div>
-    <h3>Backend & APIs</h3>
-    <div class="tag-container">
-      <span class="small-tag">FastAPI</span>
-      <span class="small-tag">Flask</span>
-      <span class="small-tag">GoLang</span>
-      <span class="small-tag">NestJS</span>
-      <span class="small-tag">.NET Core</span>
-      <span class="small-tag">REST APIs</span>
+    
+    <div class="tab-content" id="3-tab-0">
+      <h3>Frontend Technologies</h3>
+      <div class="tag-container" style="margin-bottom: 10px;">
+        <span class="small-tag">React</span>
+        <span class="small-tag">Next.js</span>
+        <span class="small-tag">Angular</span>
+        <span class="small-tag">Tailwind CSS</span>
+        <span class="small-tag">TypeScript</span>
+        <span class="small-tag">HTML / CSS</span>
+      </div>
+      <h3>Backend &amp; APIs</h3>
+      <div class="tag-container">
+        <span class="small-tag">FastAPI</span>
+        <span class="small-tag">Flask</span>
+        <span class="small-tag">GoLang</span>
+        <span class="small-tag">NestJS</span>
+        <span class="small-tag">.NET Core</span>
+        <span class="small-tag">REST APIs</span>
+      </div>
     </div>
-  </div>
-  
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>🧠 AI, Databases & Cloud</h2>
-    <h3>AI/ML & Semantic Search</h3>
-    <div class="tag-container" style="margin-bottom: 10px;">
-      <span class="small-tag">Llama 3</span>
-      <span class="small-tag">OpenAI API</span>
-      <span class="small-tag">Explainable AI (XAI)</span>
-      <span class="small-tag">Pinecone (Vector DB)</span>
-      <span class="small-tag">Semantic Search</span>
-      <span class="small-tag">OCR / Text Mining</span>
-    </div>
-    <h3>DevOps & Data</h3>
-    <div class="tag-container">
-      <span class="small-tag">Docker</span>
-      <span class="small-tag">AWS</span>
-      <span class="small-tag">Git / GitHub</span>
-      <span class="small-tag">SQL Server</span>
-      <span class="small-tag">SQLite</span>
-      <span class="small-tag">MongoDB</span>
+    
+    <div class="tab-content hidden" id="3-tab-1">
+      <h3>AI/ML &amp; Semantic Search</h3>
+      <div class="tag-container" style="margin-bottom: 10px;">
+        <span class="small-tag">Llama 3</span>
+        <span class="small-tag">OpenAI API</span>
+        <span class="small-tag">Explainable AI (XAI)</span>
+        <span class="small-tag">Pinecone (Vector DB)</span>
+        <span class="small-tag">Semantic Search</span>
+        <span class="small-tag">OCR / Text Mining</span>
+      </div>
+      <h3>DevOps &amp; Data</h3>
+      <div class="tag-container">
+        <span class="small-tag">Docker</span>
+        <span class="small-tag">AWS</span>
+        <span class="small-tag">Git / GitHub</span>
+        <span class="small-tag">SQL Server</span>
+        <span class="small-tag">SQLite</span>
+        <span class="small-tag">MongoDB</span>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Scene 4: Projects (SaaS Lab) -->
-<div class="hscene" id="hs4" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>🚀 Enterprise SaaS Projects</h2>
-    <h3>InvoParse — AI Invoice SaaS</h3>
-    <p>AI invoice processing pipeline using Llama 3 and OCR. Achieved 99.8% extraction accuracy and cut manual administrative work by 95%.</p>
+<div class="hscene" id="hs4">
+  <div class="paper-card">
+    <div class="card-tabs">
+      <button class="card-tab active" onclick="showTab('4', 0)">🚀 Enterprise SaaS</button>
+      <button class="card-tab" onclick="showTab('4', 1)">💡 Real-World Platforms</button>
+    </div>
     
-    <h3>DocDiff — Semantic Diff Engine</h3>
-    <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
-  </div>
-  
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>💡 Real-World Platforms</h2>
-    <h3>AutoDock — Smart Warehouse SaaS</h3>
-    <p>Warehouse automation system with NestJS and WebSocket. Integrated IoT, RFID, and AI-based tracking, slashing turnaround by 72%.</p>
+    <div class="tab-content" id="4-tab-0">
+      <h3>InvoParse — AI Invoice SaaS</h3>
+      <p>AI invoice processing pipeline using Llama 3 and OCR. Achieved 99.8% extraction accuracy and cut manual administrative work by 95%.</p>
+      
+      <h3>DocDiff — Semantic Diff Engine</h3>
+      <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
+    </div>
     
-    <h3>Govt Welfare eligibility Engine</h3>
-    <p>Final-year project recommending welfare schemes based on live user data. Boosted accuracy by 35% using XAI for transparency.</p>
+    <div class="tab-content hidden" id="4-tab-1">
+      <h3>AutoDock — Smart Warehouse SaaS</h3>
+      <p>Warehouse automation system with NestJS and WebSocket. Integrated IoT, RFID, and AI-based tracking, slashing turnaround by 72%.</p>
+      
+      <h3>Govt Welfare eligibility Engine</h3>
+      <p>Final-year project recommending welfare schemes based on live user data. Boosted accuracy by 35% using XAI for transparency.</p>
+    </div>
   </div>
 </div>
 
 <!-- Scene 5: Education & Achievements -->
-<div class="hscene" id="hs5" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>🎓 Education</h2>
-    <h3>Bachelor of Computer Applications (BCA)</h3>
-    <p><strong>Dr. GRD College of Arts and Science</strong>, Coimbatore</p>
-    <p style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Class of 2023 – 2026</p>
-    <ul>
-      <li>Major in Software Development, Minor in Web Technologies.</li>
-      <li>Academic Aggregate: 68.12% (consistently above 60% through 10th, 12th &amp; UG).</li>
-    </ul>
-  </div>
-  
-  <div class="paper-card" style="max-width: 440px;">
-    <h2>🏆 Achievements & Leadership</h2>
-    <ul>
-      <li><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
-      <li><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
-      <li><strong>Research</strong>: Presented AI &amp; Remote Sensing research at national technical events at IIT Bombay and Anna University.</li>
-    </ul>
+<div class="hscene" id="hs5">
+  <div class="paper-card">
+    <div class="card-tabs">
+      <button class="card-tab active" onclick="showTab('5', 0)">🎓 Education</button>
+      <button class="card-tab" onclick="showTab('5', 1)">🏆 Achievements</button>
+    </div>
+    
+    <div class="tab-content" id="5-tab-0">
+      <h3>Bachelor of Computer Applications (BCA)</h3>
+      <p><strong>Dr. GRD College of Arts and Science</strong>, Coimbatore</p>
+      <p style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Class of 2023 – 2026</p>
+      <ul>
+        <li>Major in Software Development, Minor in Web Technologies.</li>
+        <li>Academic Aggregate: 68.12% (consistently above 60% through 10th, 12th &amp; UG).</li>
+      </ul>
+    </div>
+    
+    <div class="tab-content hidden" id="5-tab-1">
+      <ul>
+        <li><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
+        <li><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
+        <li><strong>Research</strong>: Presented AI &amp; Remote Sensing research at national technical events at IIT Bombay and Anna University.</li>
+      </ul>
+    </div>
   </div>
 </div>
 

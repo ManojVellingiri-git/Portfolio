@@ -76,6 +76,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;z-index:100;opacity:0;visibility:hidden;transition:opacity 0.7s ease;
 }
+.hscene-row {
+  flex-direction: row;
+  gap: 30px;
+}
 
 /* Scene 1 */
 #s1-title{
@@ -423,11 +427,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 </div>
 
 <!-- Scene 2: Experience -->
-<div class="hscene" id="hs2">
+<div class="hscene hscene-row" id="hs2">
   <div class="paper-card">
-    <h2>💻 Experience</h2>
-    
-    <h3 style="margin-top: 0;">Teloro Software</h3>
+    <h2 style="margin-bottom: 8px;">💻 Teloro Software</h2>
     <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Full Stack Developer Intern • Remote • May 2025 – May 2026</div>
     <ul>
       <li>Developed AI SaaS applications (<strong>Teloro GPT</strong> &amp; <strong>Auto Dock</strong>).</li>
@@ -435,17 +437,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
       <li>Built document processing and workflow automation for international clients.</li>
       <li>Contributed to cloud deployments and Dockerized microservices.</li>
     </ul>
-    <div class="tag-container" style="margin-bottom: 12px;">
+    <div class="tag-container">
       <span class="small-tag">FastAPI</span>
       <span class="small-tag">Flask</span>
       <span class="small-tag">React</span>
       <span class="small-tag">Angular</span>
       <span class="small-tag">Docker</span>
     </div>
-    
-    <div class="cdiv" style="border-top: 2px dashed #ccc; margin: 16px 0;"></div>
-    
-    <h3>Keenminds Tech</h3>
+  </div>
+  <div class="paper-card">
+    <h2 style="margin-bottom: 8px;">💻 Keenminds Tech</h2>
     <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Software Engineer Intern • Coimbatore • Dec 2024 – Jun 2025</div>
     <ul>
       <li>Built <strong>DocDiff</strong>, a semantic document comparison engine using GoLang and Pinecone.</li>
@@ -464,12 +465,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 </div>
 
 <!-- Scene 3: Skills City -->
-<div class="hscene" id="hs3">
+<div class="hscene hscene-row" id="hs3">
   <div class="paper-card">
-    <h2>🛠️ Tech Stack</h2>
-    
-    <h3 style="margin-top: 0;">Frontend &amp; Backend</h3>
-    <div class="tag-container" style="margin-bottom: 12px;">
+    <h2 style="margin-bottom: 8px;">🛠️ Frontend &amp; Backend</h2>
+    <div class="tag-container">
       <span class="small-tag">React</span>
       <span class="small-tag">Next.js</span>
       <span class="small-tag">Angular</span>
@@ -483,10 +482,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
       <span class="small-tag">.NET Core</span>
       <span class="small-tag">REST APIs</span>
     </div>
-    
-    <div class="cdiv" style="border-top: 2px dashed #ccc; margin: 16px 0;"></div>
-    
-    <h3>AI / ML &amp; DevOps</h3>
+  </div>
+  <div class="paper-card">
+    <h2 style="margin-bottom: 8px;">⚙️ AI/ML &amp; DevOps</h2>
     <div class="tag-container">
       <span class="small-tag">Llama 3</span>
       <span class="small-tag">OpenAI API</span>
@@ -505,44 +503,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:
 </div>
 
 <!-- Scene 4: Projects (SaaS Lab) -->
-<div class="hscene" id="hs4">
+<div class="hscene hscene-row" id="hs4">
   <div class="paper-card">
-    <h2>🚀 Projects</h2>
-    
-    <h3 style="margin-top: 0;">InvoParse — AI Invoice SaaS</h3>
+    <h2 style="margin-bottom: 8px;">🚀 AI &amp; Doc SaaS</h2>
+    <h3 style="margin-top: 0;">InvoParse — AI Invoice</h3>
     <p>AI invoice processing pipeline using Llama 3 and OCR. Achieved 99.8% extraction accuracy and cut manual administrative work by 95%.</p>
-    
-    <h3>DocDiff — Semantic Diff Engine</h3>
-    <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
-    
     <div class="cdiv" style="border-top: 2px dashed #ccc; margin: 16px 0;"></div>
-    
-    <h3>AutoDock — Smart Warehouse SaaS</h3>
+    <h3 style="margin-top: 0;">DocDiff — Semantic Diff</h3>
+    <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
+  </div>
+  <div class="paper-card">
+    <h2 style="margin-bottom: 8px;">🚀 Automation &amp; DB</h2>
+    <h3 style="margin-top: 0;">AutoDock — Smart Warehouse</h3>
     <p>Warehouse automation system with NestJS and WebSocket. Integrated IoT, RFID, and AI-based tracking, slashing turnaround by 72%.</p>
-    
-    <h3>Govt Welfare Eligibility Engine</h3>
+    <div class="cdiv" style="border-top: 2px dashed #ccc; margin: 16px 0;"></div>
+    <h3 style="margin-top: 0;">Govt Welfare Engine</h3>
     <p>Final-year project recommending welfare schemes based on live user data. Boosted accuracy by 35% using XAI for transparency.</p>
   </div>
 </div>
 
 <!-- Scene 5: Education & Achievements -->
-<div class="hscene" id="hs5">
+<div class="hscene hscene-row" id="hs5">
   <div class="paper-card">
-    <h2>🎓 Education &amp; Achievements</h2>
-    
-    <h3 style="margin-top: 0;">Bachelor of Computer Applications (BCA)</h3>
-    <p><strong>Dr. GRD College of Arts and Science</strong>, Coimbatore (2023 – 2026)</p>
+    <h2 style="margin-bottom: 8px;">🎓 Education</h2>
+    <h3 style="margin-top: 0;">BCA (Computer Applications)</h3>
+    <p><strong>Dr. GRD College of Arts and Science</strong><br>Coimbatore (2023 – 2026)</p>
     <ul>
       <li>Major in Software Development, Minor in Web Technologies.</li>
       <li>Academic Aggregate: 68.12% (consistently above 60% through 10th, 12th &amp; UG).</li>
     </ul>
-    
-    <div class="cdiv" style="border-top: 2px dashed #ccc; margin: 16px 0;"></div>
-    
-    <h3>🏆 Key Achievements</h3>
+  </div>
+  <div class="paper-card">
+    <h2 style="margin-bottom: 8px;">🏆 Key Achievements</h2>
     <ul>
-      <li><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
-      <li><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
+      <li style="margin-bottom: 8px;"><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
+      <li style="margin-bottom: 8px;"><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
       <li><strong>Research</strong>: Presented AI &amp; Remote Sensing research at national technical events at IIT Bombay and Anna University.</li>
     </ul>
   </div>

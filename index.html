@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remix: Cinematic 3D doodle portfolio experience</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Patrick+Hand&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f9f6ef;font-family:'Caveat',cursive}
+#canvas-container{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0}
+#scroll-wrapper{position:fixed;top:0;left:0;width:100vw;height:100vh;overflow-y:scroll;z-index:10;pointer-events:all}
+#scroll-content{height:700vh;pointer-events:none}
+/* Grid paper */
+#grid-overlay{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:2;opacity:0.14;
+  background-image:
+    linear-gradient(rgba(80,80,200,0.35) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(80,80,200,0.35) 1px,transparent 1px);
+  background-size:42px 42px;
+}
+/* Margin line */
+#margin-line{
+  position:fixed;top:0;left:72px;width:2px;height:100vh;
+  pointer-events:none;z-index:2;
+  background:rgba(220,80,80,0.25);
+}
+/* Paper vignette */
+#vignette{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:3;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(190,180,160,0.4) 100%);
+}
+/* Progress bar */
+#progress-bar{
+  position:fixed;bottom:0;left:0;height:3px;background:#222;
+  width:0%;z-index:200;transition:width 0.08s linear;
+}
+/* Scroll hint */
+#scroll-hint{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  z-index:200;color:#333;font-family:'Caveat',cursive;font-size:1.3rem;
+  text-align:center;pointer-events:none;transition:opacity 0.5s;
+}
+#scroll-hint .arr{display:block;font-size:2rem;animation:bouncey 1.3s ease-in-out infinite}
+@keyframes bouncey{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+/* Nav dots */
+#nav-dots{
+  position:fixed;right:22px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:14px;z-index:200;pointer-events:auto;
+}
+.ndot{
+  width:10px;height:10px;border:2px solid #444;border-radius:50%;
+  background:transparent;transition:background 0.3s,transform 0.3s;
+  cursor:pointer;
+}
+.ndot.active{background:#222;transform:scale(1.35)}
+/* Scene name badge */
+#scene-badge{
+  position:fixed;top:22px;left:50%;transform:translateX(-50%);
+  background:rgba(249,246,239,0.9);border:2.5px solid #222;
+  border-radius:30px;padding:5px 20px;
+  font-family:'Caveat',cursive;font-size:1.1rem;font-weight:600;color:#222;
+  z-index:200;pointer-events:none;transition:opacity 0.5s;opacity:0;
+  letter-spacing:0.5px;
+}
+/* HTML Overlays */
+.hscene{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;z-index:100;opacity:0;visibility:hidden;transition:opacity 0.7s ease;
+}
+/* Scene 1 */
+#s1-title{
+  font-family:'Caveat',cursive;font-size:clamp(3rem,9vw,7.5rem);
+  font-weight:700;color:#111;text-align:center;line-height:1.05;
+  text-shadow:4px 4px 0 rgba(0,0,0,0.07);letter-spacing:-2px;
+}
+#s1-pills{
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;margin-top:20px;
+}
+.pill{
+  border:2.5px solid #222;border-radius:40px;
+  padding:6px 26px;font-family:'Caveat',cursive;
+  font-size:clamp(1rem,2.5vw,1.45rem);color:#222;letter-spacing:0.3px;
+  background:rgba(249,246,239,0.7);backdrop-filter:blur(2px);
+}
+#s1-handle{
+  margin-top:16px;font-family:'Patrick Hand',cursive;
+  font-size:1.2rem;color:#666;letter-spacing:2px;
+}
+/* Contact Panel */
+#contact-wrap{
+  background:rgba(249,246,239,0.97);border:3px solid #222;
+  border-radius:18px;padding:30px 38px;max-width:500px;width:90%;
+  position:relative;box-shadow:6px 6px 0 rgba(0,0,0,0.1);
+}
+#contact-wrap::before{
+  content:'';position:absolute;top:14px;left:14px;right:-8px;bottom:-8px;
+  border:2.5px dashed #ccc;border-radius:18px;z-index:-1;
+}
+#contact-wrap h2{
+  font-size:2rem;font-weight:700;color:#111;
+  margin-bottom:18px;padding-bottom:10px;
+  border-bottom:2px dashed #bbb;
+}
+.crow{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:12px;font-size:1.2rem;color:#222;
+}
+.cico{font-size:1.5rem;min-width:30px;text-align:center}
+.clbl{font-weight:600;color:#666;min-width:80px;font-size:0.95rem}
+.cval{color:#111;font-size:1.05rem;word-break:break-all}
+.cdiv{border-top:1.5px dashed #ccc;margin:14px 0}
+/* Final */
+#final-wrap{text-align:center;padding:0 20px}
+#final-text{
+  font-family:'Caveat',cursive;font-size:clamp(2.2rem,7vw,5.5rem);
+  font-weight:700;color:#111;line-height:1.15;
+  text-shadow:3px 3px 0 rgba(0,0,0,0.06);
+}
+#final-sub{
+  margin-top:18px;font-family:'Patrick Hand',cursive;
+  font-size:1.15rem;color:#666;letter-spacing:1px;
+}
+/* Scene section hints (mid-journey) */
+.mid-hint{
+  position:fixed;pointer-events:none;z-index:100;
+  font-family:'Caveat',cursive;color:#222;
+  background:rgba(249,246,239,0.88);
+  border:2px solid #333;border-radius:12px;
+  padding:8px 18px;font-size:1.3rem;font-weight:600;
+  transition:opacity 0.6s;opacity:0;
+}
+/* Paper-style Resume Cards */
+.paper-card {
+  background: rgba(249, 246, 239, 0.97);
+  border: 2.5px solid #222;
+  border-radius: 12px;
+  padding: 22px 26px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  font-family: 'Caveat', cursive;
+  margin: 10px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.paper-card::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+.paper-card a, .paper-card .pill {
+  pointer-events: auto;
+}
+.paper-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.12);
+}
+.paper-card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  z-index: -1;
+  pointer-events: none;
+}
+.paper-card h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 8px;
+  border-bottom: 2px dashed #bbb;
+  padding-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.paper-card h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.paper-card p, .paper-card li {
+  font-size: 1.15rem;
+  color: #222;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.paper-card ul {
+  padding-left: 18px;
+  margin-bottom: 8px;
+}
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.small-tag {
+  border: 1.5px solid #222;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.95rem;
+  background: rgba(249,246,239,0.85);
+  color: #222;
+  font-family: 'Patrick Hand', cursive;
+  font-weight: 600;
+}
+</style>
+  <script type="module" crossorigin src="/Portfolio/assets/index-C_p7reia.js"></script>
+</head>
+<body>
+<div id="grid-overlay"></div>
+<div id="margin-line"></div>
+<div id="vignette"></div>
+
+<div id="canvas-container"><canvas id="mc"></canvas></div>
+
+<div id="scroll-wrapper"><div id="scroll-content"></div></div>
+
+<!-- Scene badge -->
+<div id="scene-badge">Scene 1 — The Developer</div>
+
+<!-- Nav dots -->
+<div id="nav-dots">
+  <div class="ndot active" title="The Developer"></div>
+  <div class="ndot" title="Experience"></div>
+  <div class="ndot" title="Skills City"></div>
+  <div class="ndot" title="SaaS Lab"></div>
+  <div class="ndot" title="Global Reach"></div>
+  <div class="ndot" title="Command Center"></div>
+  <div class="ndot" title="Portal"></div>
+</div>
+
+<!-- HTML Overlays -->
+<!-- Scene 1 -->
+<div class="hscene" id="hs1">
+  <div id="s1-title">MANOJ<br>VELLINGIRI</div>
+  <div id="s1-pills">
+    <div class="pill">💻 Full Stack Developer</div>
+    <div class="pill">🧠 AI/ML Engineer</div>
+    <div class="pill">🚀 SaaS Builder</div>
+  </div>
+  <div id="s1-handle" style="pointer-events: auto;"><a href="https://linkedin.com/in/manojvellingiri" target="_blank" style="color: #666; text-decoration: none;">linkedin.com/in/manojvellingiri</a></div>
+</div>
+
+<!-- Scene 2: Experience -->
+<div class="hscene" id="hs2" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card">
+    <h2>💻 Teloro Software</h2>
+    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Full Stack Developer Intern • Remote • May 2025 – May 2026</div>
+    <ul>
+      <li>Developed AI SaaS applications (<strong>Teloro GPT</strong> &amp; <strong>Auto Dock</strong>).</li>
+      <li>Designed scalable APIs and responsive UIs with FastAPI, Flask, React, and Angular.</li>
+      <li>Built document processing and workflow automation for international clients.</li>
+      <li>Contributed to cloud deployments and Dockerized microservices.</li>
+    </ul>
+    <div class="tag-container">
+      <span class="small-tag">FastAPI</span>
+      <span class="small-tag">Flask</span>
+      <span class="small-tag">React</span>
+      <span class="small-tag">Angular</span>
+      <span class="small-tag">Docker</span>
+    </div>
+  </div>
+  
+  <div class="paper-card">
+    <h2>⚙️ Keenminds Technologies</h2>
+    <div style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Software Engineer Intern • Coimbatore • Dec 2024 – Jun 2025</div>
+    <ul>
+      <li>Built <strong>DocDiff</strong>, a semantic document comparison engine using GoLang and Pinecone.</li>
+      <li>Built <strong>InvoParse</strong>, an AI-powered invoice extraction platform using OCR and Llama 3.</li>
+      <li>Developed and maintained web applications using .NET Core and Angular.</li>
+      <li>Optimized REST APIs and SQL Server databases.</li>
+    </ul>
+    <div class="tag-container">
+      <span class="small-tag">GoLang</span>
+      <span class="small-tag">Pinecone</span>
+      <span class="small-tag">Llama 3</span>
+      <span class="small-tag">.NET Core</span>
+      <span class="small-tag">Angular</span>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 3: Skills City -->
+<div class="hscene" id="hs3" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🛠️ Core Engineering</h2>
+    <h3>Frontend Technologies</h3>
+    <div class="tag-container" style="margin-bottom: 10px;">
+      <span class="small-tag">React</span>
+      <span class="small-tag">Next.js</span>
+      <span class="small-tag">Angular</span>
+      <span class="small-tag">Tailwind CSS</span>
+      <span class="small-tag">TypeScript</span>
+      <span class="small-tag">HTML / CSS</span>
+    </div>
+    <h3>Backend & APIs</h3>
+    <div class="tag-container">
+      <span class="small-tag">FastAPI</span>
+      <span class="small-tag">Flask</span>
+      <span class="small-tag">GoLang</span>
+      <span class="small-tag">NestJS</span>
+      <span class="small-tag">.NET Core</span>
+      <span class="small-tag">REST APIs</span>
+    </div>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🧠 AI, Databases & Cloud</h2>
+    <h3>AI/ML & Semantic Search</h3>
+    <div class="tag-container" style="margin-bottom: 10px;">
+      <span class="small-tag">Llama 3</span>
+      <span class="small-tag">OpenAI API</span>
+      <span class="small-tag">Explainable AI (XAI)</span>
+      <span class="small-tag">Pinecone (Vector DB)</span>
+      <span class="small-tag">Semantic Search</span>
+      <span class="small-tag">OCR / Text Mining</span>
+    </div>
+    <h3>DevOps & Data</h3>
+    <div class="tag-container">
+      <span class="small-tag">Docker</span>
+      <span class="small-tag">AWS</span>
+      <span class="small-tag">Git / GitHub</span>
+      <span class="small-tag">SQL Server</span>
+      <span class="small-tag">SQLite</span>
+      <span class="small-tag">MongoDB</span>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 4: Projects (SaaS Lab) -->
+<div class="hscene" id="hs4" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🚀 Enterprise SaaS Projects</h2>
+    <h3>InvoParse — AI Invoice SaaS</h3>
+    <p>AI invoice processing pipeline using Llama 3 and OCR. Achieved 99.8% extraction accuracy and cut manual administrative work by 95%.</p>
+    
+    <h3>DocDiff — Semantic Diff Engine</h3>
+    <p>High-performance legal document comparison tool using GoLang and Pinecone. Provides real-time diffing with sub-100ms response times.</p>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>💡 Real-World Platforms</h2>
+    <h3>AutoDock — Smart Warehouse SaaS</h3>
+    <p>Warehouse automation system with NestJS and WebSocket. Integrated IoT, RFID, and AI-based tracking, slashing turnaround by 72%.</p>
+    
+    <h3>Govt Welfare eligibility Engine</h3>
+    <p>Final-year project recommending welfare schemes based on live user data. Boosted accuracy by 35% using XAI for transparency.</p>
+  </div>
+</div>
+
+<!-- Scene 5: Education & Achievements -->
+<div class="hscene" id="hs5" style="flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 20px;">
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🎓 Education</h2>
+    <h3>Bachelor of Computer Applications (BCA)</h3>
+    <p><strong>Dr. GRD College of Arts and Science</strong>, Coimbatore</p>
+    <p style="font-family:'Patrick Hand', cursive; font-size:1.05rem; color:#666; margin-bottom: 6px;">Class of 2023 – 2026</p>
+    <ul>
+      <li>Major in Software Development, Minor in Web Technologies.</li>
+      <li>Academic Aggregate: 68.12% (consistently above 60% through 10th, 12th &amp; UG).</li>
+    </ul>
+  </div>
+  
+  <div class="paper-card" style="max-width: 440px;">
+    <h2>🏆 Achievements & Leadership</h2>
+    <ul>
+      <li><strong>National Finalist</strong>: IIT Bombay E-Summit 2025 National Entrepreneurship Challenge, competing among top student innovators.</li>
+      <li><strong>2nd Place</strong>: Kovai E-Summit 2026 for entrepreneurial and technical excellence.</li>
+      <li><strong>Research</strong>: Presented AI &amp; Remote Sensing research at national technical events at IIT Bombay and Anna University.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Scene 6: Contact -->
+<div class="hscene" id="hs6">
+  <div id="contact-wrap" style="pointer-events: auto;">
+    <h2>📡 Command Center</h2>
+    <div class="crow"><span class="cico">👤</span><span class="clbl">Name</span><span class="cval">Manoj Vellingiri</span></div>
+    <div class="crow"><span class="cico">💼</span><span class="clbl">Role</span><span class="cval">Full Stack Developer | AI/ML Engineer</span></div>
+    <div class="crow"><span class="cico">🎓</span><span class="clbl">Education</span><span class="cval">BCA — Dr. GRD College (2026)</span></div>
+    <div class="crow"><span class="cico">📍</span><span class="clbl">Location</span><span class="cval">Coimbatore, Tamil Nadu - 641004</span></div>
+    <div class="cdiv"></div>
+    <div class="crow"><span class="cico">🔗</span><span class="clbl">LinkedIn</span><span class="cval"><a href="https://linkedin.com/in/manojvellingiri" target="_blank" style="color: #222; text-decoration: underline; font-weight: bold; pointer-events: auto;">linkedin.com/in/manojvellingiri</a></span></div>
+    <div class="crow"><span class="cico">✉️</span><span class="clbl">Email</span><span class="cval"><a href="mailto:manojvellingiri0066@gmail.com" style="color: #222; text-decoration: underline; pointer-events: auto;">manojvellingiri0066@gmail.com</a></span></div>
+    <div class="crow"><span class="cico">📞</span><span class="clbl">Phone</span><span class="cval"><a href="tel:+919363166713" style="color: #222; text-decoration: underline; pointer-events: auto;">+91 9363166713</a></span></div>
+    <div class="cdiv"></div>
+    <div style="text-align: center; margin-top: 10px;">
+      <a href="mailto:manojvellingiri0066@gmail.com?subject=Inquiry%20from%20Portfolio" class="pill" style="display: inline-block; text-decoration: none; cursor: pointer; pointer-events: auto; transition: background 0.2s;" onmouseover="this.style.background='#eee'" onmouseout="this.style.background='rgba(249,246,239,0.7)'">📩 Get In Touch</a>
+    </div>
+  </div>
+</div>
+
+<!-- Final -->
+<div class="hscene" id="hsfinal">
+  <div id="final-wrap">
+    <div id="final-text">LET'S BUILD<br>SOMETHING EXTRAORDINARY.</div>
+    <div id="final-sub">— Manoj Vellingiri · SaaS &amp; AI Builder —</div>
+  </div>
+</div>
+
+<div id="progress-bar"></div>
+<div id="scroll-hint">Scroll to explore<span class="arr">↓</span></div>
+</body>
+</html>
